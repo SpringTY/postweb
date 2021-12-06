@@ -31,7 +31,7 @@ function createService() {
             let { status } = dataAxios
             let { code } = dataAxios
             if (status === undefined) {
-                status = code
+                status = code // 兼容 code 代表status的api形式
             }
             // console.log(status);
             // 根据 code 进行判断

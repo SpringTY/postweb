@@ -29,6 +29,15 @@ const frameIn = [{
                 title: '模型列表'
             }
         },
+        {
+            path: 'predict',
+            name: 'predict',
+            component: _import('predict/predict'),
+            meta: {
+                auth: true,
+                title: '预测页面'
+            }
+        },
         // 演示页面
         {
             path: 'page1',

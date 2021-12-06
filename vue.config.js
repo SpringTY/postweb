@@ -34,6 +34,8 @@ const pages = undefined
 const model_api_host = '211.71.76.189'
 const inference_port = '6080'
 const management_port = '6081'
+const data_api_host = '211.71.76.189'
+const data_port = '7675'
 module.exports = {
     // 根据你的实际情况更改这里
     publicPath,
@@ -56,6 +58,14 @@ module.exports = {
                 changeOrigin: true, //允许跨域
                 pathRewrite: {
                     '^/api/model/inference': '',
+                }
+            },
+            '/api/data/': {
+                target: 'http://' + data_api_host + ':' + data_port,
+                ws: true,
+                changeOrigin: true, //允许跨域
+                pathRewrite: {
+                    '^/api/data/': '',
                 }
             }
         },

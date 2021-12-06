@@ -23,6 +23,13 @@ export const menuHeader = supplementPath([
         children: [
             { path: '/model_list', title: '模型列表' },
         ]
+    },
+    {
+        title: '揽件预测模块',
+        icon: 'folder-o',
+        children: [
+            { path: '/predict', title: '揽件预测演示' },
+        ]
     }, {
         title: '页面',
         icon: 'folder-o',
