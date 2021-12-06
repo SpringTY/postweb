@@ -4,26 +4,25 @@
     <el-container style="height: 650px">
       <!-- 地图 -->
       <el-aside style="width: 65%">
-        <div style="width: 100%; height: 100%; ">
+        <div style="width: 100%; height: 100%">
           <!-- 地图区域 -->
           <!-- <el-amap vid="amap" style="width: 300px; height: 300px"></el-amap> -->
           <el-amap
-            vid="amapDemo"
+            vid="map_predict"
             view-mode="3D"
             :show-indoor-map="false"
-          
             :zoom="amapContext.map.zoom"
             :center="amapContext.map.center"
             :pitch="amapContext.map.pitch"
             :rotation="amapContext.map.rotation"
           >
-            <!-- <el-amap-marker
+            <el-amap-marker
               v-for="marker in amapContext.data.markers"
-              :position="marker.position" 
-              :key="marker.id"
-              :content="marker.content"
+              :position="marker.proto.position"
+              :key="marker.proto.id"
               :events="marker.events"
               :clickable="true"
+              :extData="marker.proto"
             ></el-amap-marker>
             <el-amap-info-window
               v-if="amapContext.data.window"
@@ -31,7 +30,9 @@
               :visible="amapContext.data.window.visible"
               :content="amapContext.data.window.content"
               :offset="amapContext.data.window.offset"
-            ></el-amap-info-window> -->
+              :size="amapContext.data.window.size"
+              :events="amapContext.data.window.events"
+            ></el-amap-info-window>
           </el-amap>
         </div>
       </el-aside>
@@ -108,7 +109,10 @@
 </template>
 
 <script>
-export default {
+import log from "@/libs/util.log";
+import { VueAMap } from "vue-amap";
+let vm;
+export default vm = {
   name: "predict",
   data: function () {
     // for sidebar left
@@ -141,21 +145,35 @@ export default {
         data: {
           markers: [
             {
-              position: [116.480639, 39.996356],
-              id: "1",
+              proto: {
+                position: [116.480639, 39.996356],
+                id: "1",
+              },
               events: {
-                click() {
-                  // console.log('s')
-                  // console.log(position)
+                click: (a) => {
+                  console.log(1);
+                  let proto = a.target.w.extData;
+                  let window = this.amapContext.data.window;
+                  console.log(window);
+                  window.visible = true;
+                  window.position = proto.position;
+                  window.content = "<el-card> 坐标 :  </el-card>";
+                  // vm.$data.amapContext.data.window.visible = true;
                 },
               },
             },
           ],
           window: {
             position: [116.480639, 39.996356],
-            visible: true,
-            content: "" + "<div>show</div>",
-            offset: [5, -15],
+            visible: false,
+            content: "" + "<div>" + "</div>",
+            offset: [0, -20],
+            size: { width: 200, height: 200 },
+            events: {
+              close: (item) => {
+                console.log(item);
+              },
+            },
           },
           // 待揽件点信息
           deal: {},
@@ -218,13 +236,13 @@ export default {
     "dataContext.dataSource"(dataSource, older) {
       this.getData();
     },
-    "amapContext.data.deal"(deal, older) {
-      if (deal != null) {
-        // 画出deal相关的点
-        // 画出GroundTruth 如果存在
-        // 设置地图缩放 中心
-      }
-    },
+    // "amapContext.data.deal"(deal, older) {
+    //   if (deal != null) {
+    //     // 画出deal相关的点
+    //     // 画出GroundTruth 如果存在
+    //     // 设置地图缩放 中心
+    //   }
+    // },
   },
   mounted: function () {
     this.getData();
