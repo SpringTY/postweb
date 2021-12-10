@@ -15,14 +15,12 @@ import { frameInRoutes } from '@/router/routes'
 // 核心插件
 Vue.use(d2Admin)
 
-import VueAMap from 'vue-amap';
+import { LMap, LTileLayer, LMarker } from 'vue2-leaflet';
+import 'leaflet/dist/leaflet.css';
 
-Vue.use(VueAMap);
-VueAMap.initAMapApiLoader({
-    key: '346de708baec77f36452530f47e4b546',
-    plugin: ['AMap.Scale', 'AMap.OverView', 'AMap.ToolBar', 'AMap.MapType', ],
-    v: '1.4.4'
-});
+Vue.component('l-map', LMap);
+Vue.component('l-tile-layer', LTileLayer);
+Vue.component('l-marker', LMarker);
 
 
 new Vue({

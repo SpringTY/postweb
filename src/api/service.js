@@ -33,6 +33,11 @@ function createService() {
             if (status === undefined) {
                 status = code // 兼容 code 代表status的api形式
             }
+            // 兼容高德地图API,按理说索引Api应该收口到postapi, 考虑到服务器经常没有网络，因此需要放到JS在本地跑
+            if (typeof(status) === 'string') {
+                status = undefined
+            }
+
             // console.log(status);
             // 根据 code 进行判断
             if (status === undefined) {
@@ -50,8 +55,11 @@ function createService() {
                         break
                     default:
                         // 不是正确的 code
-                        errorCreate(`${dataAxios.msg}: ${response.config.url}`)
-                        break
+                        // errorCreate(`${dataAxios.msg}: ${response.config.url}`)
+                        // break
+                        // 注意，以后所有后端接口统一收口到postapi 而不是直接连接torchserve
+                        console.log('unvalid api resp');
+                        return dataAxios
                 }
             }
         },
@@ -121,9 +129,16 @@ function createRequestFunction(service) {
     }
 }
 
+
+// createRequestFunction(createService())(config)
+
 // 用于真实网络请求的实例和请求方法
 export const service = createService()
 export const request = createRequestFunction(service)
+
+
+// export const multiService = createMultiService()
+// export const requestAll = createRequestAllFunction(multiService)
 
 // 用于模拟网络请求的实例和请求方法
 export const serviceForMock = createService()

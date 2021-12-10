@@ -4,37 +4,43 @@
     <el-container style="height: 650px">
       <!-- 地图 -->
       <el-aside style="width: 65%">
-        <div style="width: 100%; height: 100%">
-          <!-- 地图区域 -->
-          <!-- <el-amap vid="amap" style="width: 300px; height: 300px"></el-amap> -->
-          <el-amap
-            vid="map_predict"
-            view-mode="3D"
-            :show-indoor-map="false"
+        <el-container
+          style="width: 100%; height: 100%"
+          v-loading="amapContext.map.loadding"
+        >
+          <l-map
+            ref="predictMap"
             :zoom="amapContext.map.zoom"
             :center="amapContext.map.center"
-            :pitch="amapContext.map.pitch"
-            :rotation="amapContext.map.rotation"
+            :bounds="amapContext.map.bounds"
           >
-            <el-amap-marker
-              v-for="marker in amapContext.data.markers"
-              :position="marker.proto.position"
-              :key="marker.proto.id"
-              :events="marker.events"
-              :clickable="true"
-              :extData="marker.proto"
-            ></el-amap-marker>
-            <el-amap-info-window
-              v-if="amapContext.data.window"
-              :position="amapContext.data.window.position"
-              :visible="amapContext.data.window.visible"
-              :content="amapContext.data.window.content"
-              :offset="amapContext.data.window.offset"
-              :size="amapContext.data.window.size"
-              :events="amapContext.data.window.events"
-            ></el-amap-info-window>
-          </el-amap>
-        </div>
+            <l-tile-layer
+              :url="amapContext.map.url"
+              :attribution="amapContext.map.attribution"
+            ></l-tile-layer>
+            <l-marker
+              ref="markers"
+              v-for="(marker, idx) in amapContext.data.markers"
+              :key="idx"
+              :lat-lng="marker.position"
+              :icon="marker.iconShow"
+            >
+              <l-popup
+                ref="popups"
+                :option="{
+                  minWidth: 60,
+                }"
+              >
+                该位置一共存在{{ marker.innerCount }}个订单
+                <div />
+                经纬度:{{ marker.latlng }}
+                <div />
+                地址: {{ marker.address }}
+              </l-popup>
+            </l-marker>
+            <!-- <l-marker :lat-lng="[39.996356, 116.480639]"></l-marker> -->
+          </l-map>
+        </el-container>
       </el-aside>
       <el-main style="margin-left: 20px; padding: 0px; width: 35%">
         <el-card style="height: 100%">
@@ -102,18 +108,182 @@
       </el-main>
     </el-container>
     <!-- 底部 -->
-    <el-container>
-      <div style="background-color: pink; width: 100%; height: 200px"></div>
+    <el-container style="margin-top: 20px">
+      <el-card style="width: 100%">
+        <div style="margin-top: 5px; margin-left: 20px">
+          <div>
+            <el-collapse>
+              <el-collapse-item
+                :title="
+                  '当前揽件数据:' +
+                  dataContext.dataList[amapContext.data.dealIdx].id
+                "
+                name="2"
+              >
+                <div style="margin-left: 12px; margin-top: 20px">
+                  当前揽件数据id:
+                  <a style="margin-left: 30px">
+                    {{ dataContext.dataList[amapContext.data.dealIdx].id }}
+                  </a>
+                  <el-table
+                    :data="modelContext.markersTable"
+                    style="margin-top: 20px; width: 100%"
+                    :row-class-name="tableRowClassName"
+                    border
+                  >
+                    <el-table-column prop="timeIdx" label="下单顺序" width="100">
+                    </el-table-column>
+                    <el-table-column prop="location" label="经纬度">
+                    </el-table-column>
+                    <el-table-column prop="address" label="地址">
+                    </el-table-column>
+                    <el-table-column prop="dealTime" label="时间">
+                    </el-table-column>
+                  </el-table>
+                </div>
+              </el-collapse-item>
+            </el-collapse>
+          </div>
+          <el-divider></el-divider>
+          <div style="margin-top: 20px">
+            <el-row style="margin-top: 20px">
+              <el-col :span="5">
+                <a> 预测模型:</a>
+                <el-select
+                  v-model="modelContext.modelIdx"
+                  placeholder="请选择一个模型"
+                  filterable
+                  style="left: 10px"
+                  size="small"
+                >
+                  <el-option
+                    v-for="(model, idx) in meta.modelList"
+                    :key="idx"
+                    :label="model.name + model.version"
+                    :value="idx"
+                  >
+                  </el-option>
+                </el-select>
+              </el-col>
+              <el-col :span="1">
+                <!-- <el-button
+                  style="marigin-left: 50px"
+                  type="primary"
+                  icon="el-icon-search"
+                  size="small"
+                  >预测</el-button
+                > -->
+              </el-col>
+            </el-row>
+          </div>
+
+          <div style="margin-top: 25px">
+            <el-row>
+              <el-col :span="12">
+                <a>预测结果:</a>
+                <el-timeline style="margin-left: 100px; margin-top: 15px">
+                  <el-timeline-item>
+                    经纬度:120.180503,30.323697
+                    <div />
+                    地址:浙江省杭州市拱墅区东新街道东方茂商业中心T3新天地购物中心
+                  </el-timeline-item>
+                  <el-timeline-item>
+                    经纬度:120.180503,30.323697
+                    <div />
+                    地址:浙江省杭州市拱墅区东新街道东方茂商业中心T3新天地购物中心 </el-timeline-item
+                  ><el-timeline-item>
+                    经纬度:120.180503,30.323697
+                    <div />
+                    地址:浙江省杭州市拱墅区东新街道东方茂商业中心T3新天地购物中心 </el-timeline-item
+                  ><el-timeline-item>
+                    经纬度:120.180503,30.323697
+                    <div />
+                    地址:浙江省杭州市拱墅区东新街道东方茂商业中心T3新天地购物中心
+                  </el-timeline-item>
+                  <!-- <el-timeline-item
+                    v-for="(activity, index) in activities"
+                    :key="index"
+                    :timestamp="activity.timestamp"
+                  >
+                    {{ activity.content }}
+                  </el-timeline-item> -->
+                </el-timeline>
+              </el-col>
+
+              <el-col :span="12">
+                <a>快递员真实揽件路径 :</a>
+                <el-timeline style="margin-left: 100px; margin-top: 15px">
+                  <el-timeline-item>
+                    经纬度:120.180503,30.323697
+                    <div />
+                    地址:浙江省杭州市拱墅区东新街道东方茂商业中心T3新天地购物中心
+                  </el-timeline-item>
+                  <el-timeline-item>
+                    经纬度:120.180503,30.323697
+                    <div />
+                    地址:浙江省杭州市拱墅区东新街道东方茂商业中心T3新天地购物中心 </el-timeline-item
+                  ><el-timeline-item>
+                    经纬度:120.180503,30.323697
+                    <div />
+                    地址:浙江省杭州市拱墅区东新街道东方茂商业中心T3新天地购物中心 </el-timeline-item
+                  ><el-timeline-item>
+                    经纬度:120.180503,30.323697
+                    <div />
+                    地址:浙江省杭州市拱墅区东新街道东方茂商业中心T3新天地购物中心
+                  </el-timeline-item>
+                  <!-- <el-timeline-item
+                    v-for="(activity, index) in activities"
+                    :key="index"
+                    :timestamp="activity.timestamp"
+                  >
+                    {{ activity.content }}
+                  </el-timeline-item> -->
+                </el-timeline>
+              </el-col>
+            </el-row>
+            <el-row style="width: 900px">
+              <el-descriptions
+                class="margin-top"
+                title="评价指标"
+                :column="3"
+                border
+              >
+                <el-descriptions-item label="前三点命中个数"
+                  >kooriookami</el-descriptions-item
+                >
+                <el-descriptions-item label="肯德尔系数"
+                  >kooriookami</el-descriptions-item
+                >
+                <el-descriptions-item label="LSD"
+                  >kooriookami</el-descriptions-item
+                >
+              </el-descriptions>
+            </el-row>
+          </div>
+        </div>
+      </el-card>
     </el-container>
   </d2-container>
 </template>
 
 <script>
+import MathUtil from "@/libs/util.math.js";
+import L from "leaflet";
+import { latLngBounds } from "leaflet";
+import { LMap, LTileLayer, LMarker, LPopup, LTooltip } from "vue2-leaflet";
+import icon from "leaflet/dist/images/marker-icon.png";
+import iconShadow from "leaflet/dist/images/marker-shadow.png";
 import log from "@/libs/util.log";
-import { VueAMap } from "vue-amap";
 let vm;
 export default vm = {
   name: "predict",
+  components: {
+    LMap,
+    LTileLayer,
+    LMarker,
+    LPopup,
+    LTooltip,
+  },
   data: function () {
     // for sidebar left
     return {
@@ -130,53 +300,59 @@ export default vm = {
             label: "静态无须指定",
           },
         ],
+        modelList: [
+          {
+            name: "greedy_distance",
+            version: "1.1.0",
+          },
+        ],
       },
       amapContext: {
         // 地图参数
         map: {
-          center: [116.473778, 39.990661],
-          position: [116.473778, 39.990661],
+          bounds: null,
+          center: [39.990661, 116.473778],
+          position: [39.990661, 116.473778],
           zoom: 14,
           pitch: 0,
           rotation: 15,
           polyLine: [],
+          loadding: false,
+          markerIcon: L.icon({
+            iconUrl: icon,
+            shadowUrl: iconShadow,
+            iconSize: [30, 50], // size of the icon
+            shadowSize: [50, 64], // size of the shadow
+            iconAnchor: [15, 50], // point of the icon which will correspond to marker's location
+            shadowAnchor: [15, 64], // the same for the shadow
+            popupAnchor: [0, -40], // point from which the popup should open relative to the iconAnchor
+          }),
+          attribution:
+            '&copy; <a target="_blank" >INSIS spring</a> contributors',
+          url: "http://webrd01.is.autonavi.com/appmaptile?lang=zh_cn&size=1&scale=1&style=7&x={x}&y={y}&z={z}",
         },
-        // 地图数据参数 116.480639,39.996356
+        // 地图数据参数
         data: {
           markers: [
             {
+              position: [39.995839, 116.477646],
               proto: {
-                position: [116.480639, 39.996356],
+                position: [39.995839, 116.477646],
                 id: "1",
               },
-              events: {
-                click: (a) => {
-                  console.log(1);
-                  let proto = a.target.w.extData;
-                  let window = this.amapContext.data.window;
-                  console.log(window);
-                  window.visible = true;
-                  window.position = proto.position;
-                  window.content = "<el-card> 坐标 :  </el-card>";
-                  // vm.$data.amapContext.data.window.visible = true;
-                },
-              },
+              iconShow: L.icon({
+                iconUrl: icon,
+                shadowUrl: iconShadow,
+
+                iconSize: [30, 50], // size of the icon
+                shadowSize: [50, 64], // size of the shadow
+                iconAnchor: [15, 50], // point of the icon which will correspond to marker's location
+                shadowAnchor: [15, 64], // the same for the shadow
+                popupAnchor: [0, -40], // point from which the popup should open relative to the iconAnchor
+              }),
             },
           ],
-          window: {
-            position: [116.480639, 39.996356],
-            visible: false,
-            content: "" + "<div>" + "</div>",
-            offset: [0, -20],
-            size: { width: 200, height: 200 },
-            events: {
-              close: (item) => {
-                console.log(item);
-              },
-            },
-          },
-          // 待揽件点信息
-          deal: {},
+          dealIdx: 1, // 当前业务是哪个deal
           // 轨迹信息
           trajectory: [],
         },
@@ -229,23 +405,102 @@ export default vm = {
         ],
       },
       // for bottom
-      modelContext: {},
+      modelContext: {
+        markersTable: [],
+        modelIdx: 0,
+        predict: [], // mock give grouth
+      },
     };
   },
   watch: {
     "dataContext.dataSource"(dataSource, older) {
-      this.getData();
+      // 这里切换应该更换数据项，而不是数据
     },
-    // "amapContext.data.deal"(deal, older) {
-    //   if (deal != null) {
-    //     // 画出deal相关的点
-    //     // 画出GroundTruth 如果存在
-    //     // 设置地图缩放 中心
-    //   }
-    // },
+    "dataContext.dataId"(dataId, older) {
+      this.getData();
+      this.amapContext.data.dealIdx = 0;
+    },
+    async "amapContext.data.dealIdx"(curIdx, nextIdx) {
+      // convert Current Info To Map markers
+      this.$data.amapContext.map.loadding = true;
+      let currentDeal = this.$data.dataContext.dataList[curIdx];
+      this.convertOrderByTimeAsc(currentDeal);
+      // deal with markers
+      let markers = [];
+      let markersTable = [];
+      let bounds = {
+        lngMax: currentDeal.points[0][2],
+        lngMin: currentDeal.points[0][2],
+        latMax: currentDeal.points[0][1],
+        latMin: currentDeal.points[0][1],
+      };
+      let locationMap = new Map();
+
+      const locations = currentDeal.points.map((point) => {
+        let lng = point[2];
+        let lat = point[1];
+        return [lat, lng];
+      });
+      // 此方法是异步回调
+      const addresses = await this.$api.GET_GEO_ENCODINGS(locations);
+      // 反向注册到原来的数据上
+      currentDeal.addresses = addresses;
+
+      // 需要过滤一下重复点
+      currentDeal.points.forEach((point, idx) => {
+        let lng = point[2];
+        let lat = point[1];
+        let address = addresses[idx].regeocode.formatted_address;
+        let dealTime = point[0];
+        bounds.lngMax = Math.max(bounds.lngMax, lng);
+        bounds.lngMin = Math.min(bounds.lngMin, lng);
+        bounds.latMax = Math.max(bounds.latMax, lat);
+        bounds.latMin = Math.min(bounds.latMin, lat);
+        let ptrKey = lng.toString() + ":" + lat.toString();
+        let ptr = locationMap.get(ptrKey);
+        if (ptr == null) {
+          ptr = {
+            position: [lng, lat],
+            latlng: lat.toString() + "," + lng,
+            address: address,
+            // proto: point,
+            iconShow: this.$data.amapContext.map.markerIcon,
+            innerContent: [{ timeOrder: idx, dealTime: dealTime }],
+            innerCount: 1,
+          };
+          markers.push(ptr);
+          locationMap.set(ptrKey, ptr);
+        } else {
+          ptr.innerContent.push({ timeOrder: idx, dealTime: dealTime });
+          ptr.innerCount += 1;
+        }
+        markersTable.push({
+          location: lat.toString() + "," + lng,
+          address: address,
+          timeIdx: idx,
+          dealTime: dealTime,
+        });
+        idx++;
+      });
+
+      this.$data.amapContext.map.bounds = latLngBounds([
+        [bounds.lngMax, bounds.latMax],
+        [bounds.lngMin, bounds.latMin],
+      ]);
+      this.$data.amapContext.data.markers = markers;
+      // deal with
+      this.modelContext.markersTable = markersTable;
+      this.$data.amapContext.map.loadding = false;
+    },
   },
   mounted: function () {
     this.getData();
+
+    this.$nextTick(() => {
+      console.log(this.$refs.popups);
+      this.$refs.popups[0].mapObject.openPopup();
+    });
+    this.amapContext.data.dealIdx = 0;
   },
   methods: {
     async getData() {
@@ -256,14 +511,41 @@ export default vm = {
         this.$data.dataContext.pageSize
       );
       const deals = res.deals;
+      let idx = 0;
       deals.forEach((element) => {
         element.region = "杭州"; // 静态数据来自于杭州
+        element.idx = idx;
+        idx++;
       });
       this.$data.dataContext.dataList = deals;
     },
     // 把信息保存到地图数据中,wath地图数据就会自动绘画
-    async setDataToMap(deal) {
-      this.$data.amapContext.data.points = deal;
+    // 点击绘制按钮会触发
+    setDataToMap(deal) {
+      this.$data.amapContext.data.dealIdx = deal.idx;
+    },
+    convertOrderByTimeAsc(currentDeal) {
+      // convert to current Index
+      let index = MathUtil.argSort(currentDeal.points, (a, b) => {
+        return a[0] - b[0];
+      }); //
+      let points = [];
+      let groundTruth = [];
+      let start = -1;
+      let oldToNew = new Map();
+      index.forEach((oldIdx, newIdx) => {
+        if (oldIdx == currentDeal.start) {
+          start = newIdx;
+        }
+        points.push(currentDeal.points[oldIdx]);
+        oldToNew.set(oldIdx, newIdx);
+      });
+      currentDeal.groundTruth.forEach((ptr) => {
+        groundTruth.push(oldToNew.get(ptr));
+      });
+      currentDeal.points = points;
+      currentDeal.start = start;
+      currentDeal.groundTruth = groundTruth;
     },
   },
 };
@@ -292,4 +574,7 @@ export default vm = {
   width: 22%;
   background-color: rebeccapurple;
 }
+</style>
+<style lang="scss">
+@import "~leaflet/dist/leaflet.css";
 </style>
