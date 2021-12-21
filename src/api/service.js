@@ -24,20 +24,19 @@ function createService() {
         response => {
             // console.log('resp', response);
             // dataAxios 是 axios 返回数据中的 data
-            const dataAxios = response.data
-                // console.log(dataAxios);
-                // console.log(dataAxios.status);
-                // 这个状态码是和后端约定的
+            let dataAxios = response.data
+            console.log(dataAxios);
+            // console.log(dataAxios.status);
+            // 这个状态码是和后端约定的
             let { status } = dataAxios
             let { code } = dataAxios
-            if (status === undefined) {
-                status = code // 兼容 code 代表status的api形式
-            }
-            // 兼容高德地图API,按理说索引Api应该收口到postapi, 考虑到服务器经常没有网络，因此需要放到JS在本地跑
-            if (typeof(status) === 'string') {
+            if (status == undefined) {
+                status = code
+                dataAxios = dataAxios.data
+            } else if (typeof(status) === 'string') {
                 status = undefined
-            }
 
+            }
             // console.log(status);
             // 根据 code 进行判断
             if (status === undefined) {
@@ -48,7 +47,8 @@ function createService() {
                 switch (status) {
                     case 0:
                         // [ 示例 ] code === 0 代表没有错误
-                        return dataAxios.data
+                        console.log('test');
+                        return dataAxios
                     case 'xxx':
                         // [ 示例 ] 其它和后台约定的 code
                         errorCreate(`[ code: xxx ] ${dataAxios.msg}: ${response.config.url}`)

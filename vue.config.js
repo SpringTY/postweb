@@ -32,8 +32,8 @@ const pages = undefined
     //   subpage: './src/subpage.js'
     // }
 const model_api_host = '211.71.76.189'
-const inference_port = '6080'
-const management_port = '6081'
+const inference_port = '7675'
+const management_port = '7675'
 const data_api_host = '211.71.76.189'
 const data_port = '7675'
 const amap_api_host = 'restapi.amap.com'

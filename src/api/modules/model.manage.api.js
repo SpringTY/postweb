@@ -5,7 +5,6 @@ export default ({ service, request, serviceForMock, requestForMock, mock, faker,
      * @param {Object} data 登录携带的信息
      */
     GET_REGISTER_MODELS(data = {}) {
-
         // 接口请求
         return request({
             url: manage_prefix + '/models',
@@ -13,22 +12,37 @@ export default ({ service, request, serviceForMock, requestForMock, mock, faker,
             data
         })
     },
-    GET_MODEL_DETAIL(name = '') {
+    GET_MODEL_DETAIL() {
         return request({
-            url: manage_prefix + '/models/' + name,
+            url: manage_prefix + '/model/states',
             method: 'get'
         })
     },
     UNREGISTER_MODEL(name = '', version = '') {
         return request({
-            url: manage_prefix + '/models/' + name + '/' + version,
+            url: manage_prefix + '/model/' + name + '/' + version,
             method: 'delete'
         })
     },
     UPDATE_MODEL(name = '', version = '', minWorkers = 0, maxWorkers = 0) {
         return request({
-            url: manage_prefix + '/models/' + name + '/' + version + "?min_worker=" + minWorkers.toString() + "&max_worker=" + maxWorkers.toString(),
-            method: 'put'
+            url: manage_prefix + '/model/' + name + '/' + version,
+            method: 'post',
+            data: {
+                "min_workers": minWorkers,
+                "max_workers": maxWorkers,
+            }
         })
-    }
+    },
+    // 暂时卸载管理js中 仅仅包含一个方法
+    PREDICT_MODEL(name = '', version = '', start = 0, feature = []) {
+        return request({
+            url: manage_prefix + '/model/' + name + '/' + version,
+            method: 'put',
+            data: {
+                feature,
+                start
+            }
+        })
+    },
 })
