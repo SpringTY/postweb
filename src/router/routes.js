@@ -8,7 +8,7 @@ const _import = require('@/libs/util.import.' + process.env.NODE_ENV)
  */
 const frameIn = [{
     path: '/',
-    redirect: { name: 'index' },
+    redirect: { name: 'predict' },
     component: layoutHeaderAside,
     children: [
         // 首页

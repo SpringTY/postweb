@@ -18,6 +18,23 @@
               :url="amapContext.map.url"
               :attribution="amapContext.map.attribution"
             ></l-tile-layer>
+            <v-polyline-decorator
+              :paths="[amapContext.data.groudTruth]"
+              :patterns="amapContext.map.pattens"
+            ></v-polyline-decorator>
+            <v-polyline
+              :opacity="0.5"
+              :latLngs="amapContext.data.groudTruth"
+            ></v-polyline>
+            <!-- <v-polyline-decorator
+              :paths="[amapContext.data.predict]"
+              :patterns="amapContext.map.pattens"
+            ></v-polyline-decorator>
+             <v-polyline
+              :opacity="0.5"
+              :latLngs="amapContext.data.predict"
+            ></v-polyline> -->
+            <!-- <v-polyline :opacity="1" :latLngs="latlngs1"></v-polyline> -->
             <l-marker
               ref="markers"
               v-for="(marker, idx) in amapContext.data.markers"
@@ -239,15 +256,15 @@
                 :column="3"
                 border
               >
-                <el-descriptions-item label="前三点命中个数"
-                  >kooriookami</el-descriptions-item
-                >
-                <el-descriptions-item label="肯德尔系数"
-                  >kooriookami</el-descriptions-item
-                >
-                <el-descriptions-item label="LSD"
-                  >kooriookami</el-descriptions-item
-                >
+                <el-descriptions-item label="前三点命中个数">{{
+                  modelContext.HR_3
+                }}</el-descriptions-item>
+                <el-descriptions-item label="肯德尔系数">{{
+                  modelContext.Kendall
+                }}</el-descriptions-item>
+                <el-descriptions-item label="LSD">{{
+                  modelContext.LSD
+                }}</el-descriptions-item>
               </el-descriptions>
             </el-row>
           </div>
@@ -260,10 +277,19 @@
 <script>
 import MathUtil from "@/libs/util.math.js";
 import L from "leaflet";
+
 import { latLngBounds } from "leaflet";
-import { LMap, LTileLayer, LMarker, LPopup, LTooltip } from "vue2-leaflet";
+import {
+  LMap,
+  LTileLayer,
+  LMarker,
+  LPopup,
+  LTooltip,
+  LPolyline,
+} from "vue2-leaflet";
 import icon from "leaflet/dist/images/marker-icon.png";
 import iconShadow from "leaflet/dist/images/marker-shadow.png";
+import Vue2LeafletPolylinedecorator from "vue2-leaflet-polylinedecorator";
 
 let vm;
 export default vm = {
@@ -274,15 +300,21 @@ export default vm = {
     LMarker,
     LPopup,
     LTooltip,
+    "v-polyline": LPolyline,
+    "v-polyline-decorator": Vue2LeafletPolylinedecorator,
   },
   data: function () {
     // for sidebar left
     return {
+      latlngs1: [
+        L.latLng(30.326841, 120.184811),
+        L.latLng(30.317802, 120.166186),
+      ],
       meta: {
         dataSourceList: [
           {
-            value: "上海市",
-            label: "上海市",
+            value: "杭州市",
+            label: "杭州市",
           },
         ],
         dataIdList: [
@@ -321,6 +353,19 @@ export default vm = {
           attribution:
             '&copy; <a target="_blank" >INSIS spring</a> contributors',
           url: "http://webrd01.is.autonavi.com/appmaptile?lang=zh_cn&size=1&scale=1&style=7&x={x}&y={y}&z={z}",
+          pattens: [
+            {
+              offset: 0,
+              repeat: 30,
+              symbol: L.Symbol.arrowHead({
+                pixelSize: 10,
+                polygon: false,
+                pathOptions: {
+                  stroke: true,
+                },
+              }),
+            },
+          ],
         },
         // 地图数据参数
         data: {
@@ -344,13 +389,14 @@ export default vm = {
           ],
           dealIdx: 1, // 当前业务是哪个deal
           // 轨迹信息
-          trajectory: [],
+          groudTruth: [],
+          predict: [],
         },
       },
       // for right main
       dataContext: {
         // 数据源
-        dataSource: "上海市",
+        dataSource: "杭州市",
         dataId: "20200423",
         pageNum: 1,
         pageSize: 8,
@@ -438,6 +484,9 @@ export default vm = {
         ],
         groundTruthOrder: [],
         predictOrder: [],
+        HR_3: "N/A",
+        Kendall: "N/A",
+        LSD: "N/A",
       },
     };
   },
@@ -463,14 +512,7 @@ export default vm = {
     },
     async "modelContext.modelIdx"(curIdx, preIdx) {
       this.setPredictText(this.amapContext.data.dealIdx);
-      // console.log(curNum);
-      // this.getData();
-      // this.changeDealIdx(0);
-    },
-    async "modelContext.groundTruthOrder"(newOrder, old) {
-      console.log("newOrder");
-      console.log("newOrder",newOrder);
-      // this.setPredictText(this.amapContext.data.dealIdx);
+      console.log("in");
       // console.log(curNum);
       // this.getData();
       // this.changeDealIdx(0);
@@ -480,8 +522,6 @@ export default vm = {
     this.getData();
     this.getModelList();
     this.$nextTick(function () {
-      // Code that will run only after the
-      // entire view has been rendered
       this.changeDealIdx(0);
     });
   },
@@ -507,17 +547,95 @@ export default vm = {
     },
     async setGroudTruthText(curIdx) {
       const orders = this.$data.dataContext.dataList[curIdx].Order;
-       this.$data.modelContext.groundTruthOrder = orders
+      this.$data.modelContext.groundTruthOrder = orders;
       const orderText = await this.getOrderText(curIdx, orders);
       this.modelContext.groudTruthText = orderText;
+      const groundTruthLatLng = await this.getLatlngs(curIdx, orders);
+      this.amapContext.data.groudTruth = groundTruthLatLng;
+    },
+
+    async setRank(predict) {
+      const curIdx = this.$data.amapContext.data.dealIdx;
+      const truth = this.$data.dataContext.dataList[curIdx].Order;
+      if (
+        predict.length == 0 ||
+        truth.length == 0 ||
+        truth.length != predict.length
+      ) {
+        return;
+      }
+
+      const length = predict.length;
+      let bot = 0.0;
+      let top = 0.0;
+      // HR3
+      bot = 0.0;
+      top = 0.0;
+      for (let i = 1; i < length && i < 4; i++) {
+        if (predict[i] == truth[i]) {
+          top++;
+        }
+        bot++;
+      }
+      const HR_3 = ((top * 100) / bot).toFixed(2) + "%";
+      // LSD
+      top = 0.0;
+      bot = length;
+      let index = new Array(length);
+      for (let i = 0; i < length; i++) {
+        index[predict[i]] = i;
+      }
+      for (let i = 0; i < length; i++) {
+        let omega = 1 / (i + 1);
+        let dis = Math.abs(i - index[i]);
+        top += dis * dis * omega;
+      }
+      const LSD = (top / bot).toFixed(2);
+      // Kendall
+      top = 0.0;
+      bot = ((length - 1) * length) / 2.0;
+      let pair = new Map();
+      for (let i = 0; i < length; i++) {
+        for (let j = i + 1; j < length; j++) {
+          let key = truth[i].toString() + ":" + truth[j].toString();
+          pair.set(key, true);
+        }
+      }
+      for (let i = 0; i < length; i++) {
+        for (let j = i + 1; j < length; j++) {
+          let key = predict[i].toString() + ":" + predict[j].toString();
+          if (pair.has(key)) {
+            top++;
+          } else {
+            top--;
+          }
+        }
+      }
+      const Kendall = (top / bot).toFixed(2);
+      this.$data.modelContext.LSD = LSD;
+      this.$data.modelContext.Kendall = Kendall;
+      this.$data.modelContext.HR_3 = HR_3;
+    },
+    async getLatlngs(curIdx, orders) {
+      const curDeal = this.$data.dataContext.dataList[curIdx];
+      const points = curDeal.Points;
+      let latlngs = [];
+      orders.forEach((order) => {
+        const point = points[order];
+        latlngs.push([point["features"][2], point["features"][1]]);
+      });
+      return latlngs;
     },
     async setPredictText(curIdx) {
       const predictOrder = await this.getPredictOrder(curIdx);
-      this.$data.modelContext.predictOrder = predictOrder
+      this.$data.modelContext.predictOrder = predictOrder;
       console.log(predictOrder);
       const predictText = await this.getOrderText(curIdx, predictOrder);
       console.log(predictText);
       this.modelContext.predictText = predictText;
+      const groundTruthLatLng = await this.getLatlngs(curIdx, predictOrder);
+      this.amapContext.data.predict = groundTruthLatLng;
+      await this.setRank(predictOrder);
     },
     async setOrderText(curIdx) {
       this.setGroudTruthText(curIdx);
