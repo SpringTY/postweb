@@ -15,5 +15,42 @@ export default ({ service, request, serviceForMock, requestForMock, mock, faker,
             }
         })
         return resp
+    },
+
+    GET_RAW_DEAL_TREE() {
+        let resp = request({
+            url: data_prefix + '/data/raw/tree/',
+            method: 'get',
+        })
+        return resp
+    },
+    GET_RAW_DEAL(tag, source, pageSize, pageNum) {
+        pageNum--
+        let resp = request({
+            url: data_prefix + '/data/raw/',
+            method: 'post',
+            data: {
+                "tag": tag,
+                "source": source,
+                "page_size": pageSize,
+                "page_num": pageNum
+            }
+        })
+        return resp
+    },
+    GEN_PREDICT_DEAL(tag) {
+        let resp = request({
+            url: data_prefix + '/task/gen/' + tag,
+            method: 'post',
+        })
+        return resp
+    },
+    GET_GEN_TASK(taskId) {
+
+        let resp = request({
+            url: data_prefix + '/task/gen/' + taskId,
+            method: 'get',
+        })
+        return resp
     }
 })
