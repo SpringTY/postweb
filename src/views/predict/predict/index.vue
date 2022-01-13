@@ -557,6 +557,8 @@ export default vm = {
     async setRank(predict) {
       const curIdx = this.$data.amapContext.data.dealIdx;
       const truth = this.$data.dataContext.dataList[curIdx].Order;
+      console.log("setRank real:", truth);
+      console.log("setRank predict:", predict);
       if (
         predict.length == 0 ||
         truth.length == 0 ||
@@ -581,13 +583,15 @@ export default vm = {
       // LSD
       top = 0.0;
       bot = length;
-      let index = new Array(length);
+      let index_of_predict = new Array(length);
+      let index_of_truth = new Array(length);
       for (let i = 0; i < length; i++) {
-        index[predict[i]] = i;
+        index_of_predict[predict[i]] = i;
+        index_of_truth[truth[i]] = i;
       }
       for (let i = 0; i < length; i++) {
-        let omega = 1 / (i + 1);
-        let dis = Math.abs(i - index[i]);
+        let omega = 1 / (index_of_truth[i] + 1);
+        let dis = Math.abs(index_of_predict[i] - index_of_truth[i]);
         top += dis * dis * omega;
       }
       const LSD = (top / bot).toFixed(2);
