@@ -30,7 +30,15 @@ export const menuHeader = supplementPath([
         children: [
             { path: '/predict', title: '揽件预测演示' },
         ]
-    }, {
+    },
+    {
+        title: '数据管理',
+        icon: 'folder-o',
+        children: [
+            { path: '/raw_data', title: '原始数据管理' },
+        ]
+    },
+    {
         title: '页面',
         icon: 'folder-o',
         children: [
@@ -50,13 +58,27 @@ export const menuAside = supplementPath([
             { path: '/model_list', title: '模型列表' },
         ]
     },
+    // {
+    //     title: '页面',
+    //     icon: 'folder-o',
+    //     children: [
+    //         { path: '/manage', title: '页面 1' },
+    //         { path: '/page2', title: '页面 2' },
+    //         { path: '/page3', title: '页面 3' }
+    //     ]
+    // },
     {
-        title: '页面',
+        title: '揽件预测模块',
         icon: 'folder-o',
         children: [
-            { path: '/manage', title: '页面 1' },
-            { path: '/page2', title: '页面 2' },
-            { path: '/page3', title: '页面 3' }
+            { path: '/predict', title: '揽件预测演示' },
+        ]
+    },
+    {
+        title: '数据管理',
+        icon: 'folder-o',
+        children: [
+            { path: '/raw_data', title: '原始数据' },
         ]
     }
 ])

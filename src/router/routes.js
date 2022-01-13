@@ -38,6 +38,15 @@ const frameIn = [{
                 title: '预测页面'
             }
         },
+        {
+            path: 'raw_data',
+            name: 'raw_data',
+            component: _import('data/raw_data'),
+            meta: {
+                auth: true,
+                title: '原始数据信息'
+            }
+        },
         // 演示页面
         {
             path: 'page1',
