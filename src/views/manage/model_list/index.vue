@@ -301,27 +301,15 @@ export default {
     async getModelsData() {
       let modelList = null;
       try {
-        const res = await this.$api.GET_REGISTER_MODELS();
-        modelList = res.models;
+        const res = await this.$api.GET_MODEL_DETAIL();
+        // console.log(res);
+        modelList = res.data.modelStates;
       } catch (error) {
         console.log(error);
         return;
       }
-      let modelInfos = [];
-      // nextVersion : 并发调用
-      // for (let i = 0; i < modelList.length; i++) {
-      //   let model = modelList[i];
-      //   let modelName = model.modelName;
-      //   let modelInfo = await this.$api.GET_MODEL_DETAIL(modelName);
-      //   modelInfos.push(modelInfo[0]);
-      // }
-      modelList.forEach(async (model) => {
-        let modelName = model.modelName;
-        let modelInfo = await this.$api.GET_MODEL_DETAIL(modelName);
-        // 这里会不会有线程安全性
-        modelInfos.push(modelInfo[0]);
-      });
-      this.$data.models = modelInfos;
+      // console.log(modelList);
+      this.$data.models = modelList
       // console.log("info");
       // console.log(modelInfos);
     },

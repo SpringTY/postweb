@@ -24,14 +24,18 @@ function createService() {
         response => {
             // console.log('resp', response);
             // dataAxios 是 axios 返回数据中的 data
-            const dataAxios = response.data
-                // console.log(dataAxios);
-                // console.log(dataAxios.status);
-                // 这个状态码是和后端约定的
+            let dataAxios = response.data
+            console.log(dataAxios);
+            // console.log(dataAxios.status);
+            // 这个状态码是和后端约定的
             let { status } = dataAxios
             let { code } = dataAxios
-            if (status === undefined) {
-                status = code // 兼容 code 代表status的api形式
+            if (status == undefined) {
+                status = code
+                dataAxios = dataAxios.data
+            } else if (typeof(status) === 'string') {
+                status = undefined
+
             }
             // console.log(status);
             // 根据 code 进行判断
@@ -43,15 +47,19 @@ function createService() {
                 switch (status) {
                     case 0:
                         // [ 示例 ] code === 0 代表没有错误
-                        return dataAxios.data
+                        console.log('test');
+                        return dataAxios
                     case 'xxx':
                         // [ 示例 ] 其它和后台约定的 code
                         errorCreate(`[ code: xxx ] ${dataAxios.msg}: ${response.config.url}`)
                         break
                     default:
                         // 不是正确的 code
-                        errorCreate(`${dataAxios.msg}: ${response.config.url}`)
-                        break
+                        // errorCreate(`${dataAxios.msg}: ${response.config.url}`)
+                        // break
+                        // 注意，以后所有后端接口统一收口到postapi 而不是直接连接torchserve
+                        console.log('unvalid api resp');
+                        return dataAxios
                 }
             }
         },
@@ -121,9 +129,16 @@ function createRequestFunction(service) {
     }
 }
 
+
+// createRequestFunction(createService())(config)
+
 // 用于真实网络请求的实例和请求方法
 export const service = createService()
 export const request = createRequestFunction(service)
+
+
+// export const multiService = createMultiService()
+// export const requestAll = createRequestAllFunction(multiService)
 
 // 用于模拟网络请求的实例和请求方法
 export const serviceForMock = createService()

@@ -32,10 +32,11 @@ const pages = undefined
     //   subpage: './src/subpage.js'
     // }
 const model_api_host = '211.71.76.189'
-const inference_port = '6080'
-const management_port = '6081'
+const inference_port = '7675'
+const management_port = '7675'
 const data_api_host = '211.71.76.189'
 const data_port = '7675'
+const amap_api_host = 'restapi.amap.com'
 module.exports = {
     // 根据你的实际情况更改这里
     publicPath,
@@ -44,6 +45,7 @@ module.exports = {
         publicPath, // 和 publicPath 保持一致
         disableHostCheck: process.env.NODE_ENV === 'development', // 关闭 host check，方便使用 ngrok 之类的内网转发工具
         proxy: {
+            // torchserve  manage 请求转发
             '/api/model/manage': {
                 target: 'http://' + model_api_host + ':' + management_port,
                 ws: true,
@@ -52,6 +54,7 @@ module.exports = {
                     '^/api/model/manage': '',
                 }
             },
+            // torchserve  inference 请求转发
             '/api/model/inference': {
                 target: 'http://' + model_api_host + ':' + inference_port,
                 ws: true,
@@ -60,12 +63,21 @@ module.exports = {
                     '^/api/model/inference': '',
                 }
             },
+            // postapi data模块请求转发
             '/api/data/': {
                 target: 'http://' + data_api_host + ':' + data_port,
                 ws: true,
                 changeOrigin: true, //允许跨域
                 pathRewrite: {
                     '^/api/data/': '',
+                }
+            },
+            // 高德地图Amap 请求转发
+            '/api/AmapApi/': {
+                target: 'https://' + amap_api_host, // default 80 port
+                changeOrigin: true, //允许跨域
+                pathRewrite: {
+                    '^/api/AmapApi/': '',
                 }
             }
         },
@@ -96,6 +108,9 @@ module.exports = {
                     deleteOriginalAssets: false
                 })
             ]
+        } else {
+            // debug for chrome 
+            configNew.devtool = 'source-map'
         }
         return configNew
     },
@@ -139,7 +154,7 @@ module.exports = {
         config
         // 开发环境 sourcemap 不包含列信息
             .when(process.env.NODE_ENV === 'development',
-                config => config.devtool('cheap-source-map')
+                config => config.devtool('source-map')
             )
             // 预览环境构建 vue-loader 添加 filename
             .when(
