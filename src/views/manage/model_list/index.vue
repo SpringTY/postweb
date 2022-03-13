@@ -3,6 +3,18 @@
     <template slot="header"><a class="title">模型列表</a></template>
     <!-- 主体列表 -->
     <template>
+      <div style="margin-bottom: 10px; width: 600px">
+        <el-input placeholder="请输入模型地址" v-model="modelUrl">
+          <template slot="prepend">Http://</template>
+          <template slot="append">
+            <el-button style="" type="success" @click="loadModel()">
+              导入</el-button
+            >
+          </template>
+        </el-input>
+      </div>
+    </template>
+    <template>
       <el-card
         class="box-card"
         v-for="(model, idx) in models"
@@ -195,6 +207,7 @@ export default {
   name: "modelList",
   data: function () {
     return {
+      modelUrl: "",
       //模型列表页
       models: [
         {
@@ -281,6 +294,14 @@ export default {
     this.getModelsData();
   },
   methods: {
+    async loadModel() {
+      const h = this.$createElement;
+      let url = this.$data.modelUrl;
+      this.$notify({
+        title: "加载模型成功",
+        message: h("i", { style: "color: teal" }, url),
+      });
+    },
     async removeModel(idx) {
       let selectModel = this.$data.models[idx];
       const unregisterModule = await this.$api.UNREGISTER_MODEL(
@@ -309,7 +330,7 @@ export default {
         return;
       }
       // console.log(modelList);
-      this.$data.models = modelList
+      this.$data.models = modelList;
       // console.log("info");
       // console.log(modelInfos);
     },

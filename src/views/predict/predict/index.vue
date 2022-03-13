@@ -19,12 +19,12 @@
               :attribution="amapContext.map.attribution"
             ></l-tile-layer>
             <v-polyline-decorator
-              :paths="[amapContext.data.groudTruth]"
+              :paths="[amapContext.data.predict]"
               :patterns="amapContext.map.pattens"
             ></v-polyline-decorator>
             <v-polyline
               :opacity="0.5"
-              :latLngs="amapContext.data.groudTruth"
+              :latLngs="amapContext.data.predict"
             ></v-polyline>
             <!-- <v-polyline-decorator
               :paths="[amapContext.data.predict]"
@@ -115,7 +115,7 @@
                       >绘制</el-button
                     >
 
-                    <el-button type="text" size="small">详细信息</el-button>
+                    <el-button type="text" size="small">预测</el-button>
                   </template>
                 </el-table-column>
               </el-table>
